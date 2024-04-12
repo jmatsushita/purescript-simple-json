@@ -276,13 +276,12 @@ instance readVariantCons ::
     if obj.type == name
       then do
         value :: ty <- readImpl obj.value
-        pure $ inj namep value
+        pure $ inj @name value
       else
         (fail <<< ForeignError $ "Did not match variant tag " <> name)
     <|> readVariantImpl (Proxy :: Proxy tail) o
     where
-      namep = Proxy :: Proxy name
-      name = reflectSymbol namep
+      name = reflectSymbol (Proxy :: Proxy name)
 
 -- -- | A class for writing a value into JSON
 -- -- | need to do this intelligently using Foreign probably, because of null and undefined whatever
@@ -375,16 +374,16 @@ instance consWriteForeignVariant ::
   ) => WriteForeignVariant (Cons name ty tail) row where
   writeVariantImpl _ variant =
     on
-      namep
+      @name
       writeVariant
       (writeVariantImpl (Proxy :: Proxy tail))
       variant
     where
-    namep = Proxy :: Proxy name
     writeVariant value = unsafeToForeign
-      { type: reflectSymbol namep
+      { type: reflectSymbol (Proxy :: Proxy name)
       , value: writeImpl value
       }
+
 
 instance readForeignNEArray :: ReadForeign a => ReadForeign (NonEmptyArray a) where
   readImpl f = do
